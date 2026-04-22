@@ -23,15 +23,22 @@ By Friday April 26, 5 PM Dubai time, George can open a browser and see:
 
 | Task ID | Title | Effort | Owner | Status |
 |---------|-------|--------|-------|--------|
-| FOUND-001 | Mission Control DB Schema (Supabase) | 2-3h | Claude Code | not_started |
-| FOUND-004 | Nova & Finn DB Schema | 2h | Claude Code | not_started |
-| FOUND-006 | Deploy hailo-specs repo | 1h | Claude Code | in_progress |
+| FOUND-001 | Mission Control DB Schema (Supabase) | 2-3h | Claude Code | blocked (needs Supabase token) |
+| FOUND-004 | Nova & Finn DB Schema | 2h | Claude Code | blocked (needs Supabase token) |
+| FOUND-006 | Deploy hailo-specs repo | 1h | Claude Code | ✅ complete |
 
 **Blockers George must clear Monday AM:**
 - [ ] Supabase access token (for DB creation)
 - [ ] Video platform decision (Zoom / WebRTC / DIY)
-- [ ] Tailscale URLs confirmed working
-- [ ] GitHub access confirmed (already working ✅)
+- [x] Tailscale URLs confirmed working ✅ (port 4001 live)
+- [x] GitHub access confirmed (already working ✅)
+
+**Completed Monday April 22:**
+- ✅ FOUND-006: hailo-specs repo deployed with all project specs (13 files)
+- ✅ MC-004: Mission Control built and deployed to `https://vmi3195116.tail8da2ad.ts.net:4001`
+- ✅ 4 new product specs written: HAILO Internal ATS, AI Workforce, DomesticMatch, Recruiter Marketplace
+- ✅ Airtable data layer (`lib/airtable.js`) added to hailo-mission-control
+- ✅ All changes committed and pushed to GitHub
 
 ### Tuesday April 23 — Infrastructure Continues
 
