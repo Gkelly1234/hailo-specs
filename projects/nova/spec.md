@@ -1,96 +1,169 @@
-# Nova — Product Spec
+# Nova — The Digital Recruiter
 
-**One-line:** Full end-to-end digital recruiter — handles Intake → JD → Source → Screen → Score → HM Interview with only two human touchpoints.
+**Product Version:** 1.0  
+**Status:** In Development  
+**Last Updated:** April 2026  
+**Owner:** George Kelly, CEO HAILO  
 
-**Status:** Backlog | Phase 1 | Sprint-002+
+**One-line:** Fully autonomous digital recruiter handling Intake → JD → Source → Screen → Score → HM Handoff — only two human touchpoints required.
+
+**Success Metric:** Deploy to 3 pilot clients by June 2026; achieve 60%+ time savings vs. manual recruitment.
 
 ---
 
-## Problem
-
-Recruiting is labor-intensive. Each role requires 20-40 hours of recruiter time across intake, JD writing, sourcing, screening, and coordination. HAILO needs to deliver the same quality at 10x speed.
-
-## Solution
-
-Nova is an AI agent that handles the full recruiting pipeline:
+## Architecture
 
 ```
-[Human] Intake Call → [Nova] JD Generation → [Nova] Sourcing → [Nova] Screening 
-→ [Nova] Scoring → [Human] HM Interview → [Nova] Offer Coordination
+Phase 1: INTAKE (HM video call with Nova, ~25 min)
+Phase 2: JD GENERATION & DISTRIBUTION (careers page, LinkedIn, email)
+Phase 3: SOURCING — inbound (apply links) + outbound (LinkedIn, GitHub, email)
+Phase 4: SCREENING (Nova video call, 20-25 min, scored assessment)
+Phase 5: HANDOFF (auto-schedule HM interview for score ≥ 7.5)
 ```
 
-## Hiring Funnel
+Human touchpoints: **Intake call** + **Final HM interview** only.
 
-### Stage 1: Intake Call (ElevenLabs Voice)
-- Nova calls hiring manager or receives inbound call
-- Structured intake: role, team, compensation, culture, must-haves/nice-to-haves
-- Produces: Intake Brief (stored in Supabase)
-- Human: HM on the call (~30 min)
+---
 
-### Stage 2: JD Generation
-- Claude API takes Intake Brief → generates JD
-- Multiple variants (internal brief vs public posting)
-- HM reviews + approves via simple UI
-- Auto-posts to job boards (future)
+## Phase 1: Intake Call
 
-### Stage 3: Candidate Sourcing
-- Clay enrichment + LinkedIn search
-- Filters by role requirements from intake brief
-- Ranks candidates by fit score (0-100)
-- Deduplicates against existing pipeline
+**Trigger:** HM clicks "Start Intake Call" in Nova dashboard → Zoom/Google Meet link  
+**Duration:** 25-30 min | Recorded + transcribed (ElevenLabs)
 
-### Stage 4: Screening Interview (ElevenLabs + Video)
-- Nova schedules + conducts 20-min video screening
-- Adaptive questions based on role type
-- Real-time transcription + analysis
-- Scoring: technical fit, role understanding, culture, communication, enthusiasm
+**Nova's intake script covers:**
+- Core responsibilities (3-4 day-to-day ownership areas)
+- 90-day success definition
+- Technical skills (must-have vs. nice-to-have)
+- Team structure + dynamics
+- Ideal candidate profile + red flags + target companies
+- Salary range, work location, timeline
 
-### Stage 5: Scoring + Recommendation
-- Overall score (0-100) with breakdown
-- Recommendation: Strong Pass / Pass / Maybe / Fail
-- Written summary + key strengths + concerns
-- Delivered to TA team dashboard
+**Output (Intake Brief JSON):**
+```json
+{
+  "intake_id": "UUID",
+  "hiring_manager": { "name": "...", "email": "...", "company": "..." },
+  "role_basics": { "title": "...", "department": "...", "seniority_level": "..." },
+  "role_description": { "core_responsibilities": [], "90_day_success": "...", "technical_requirements": [] },
+  "ideal_candidate": { "background": "...", "red_flags": [], "target_companies": [] },
+  "compensation": { "salary_min": 0, "salary_max": 0, "equity_description": "..." },
+  "logistics": { "work_location": "...", "interview_ready": "...", "ideal_start_date": "..." }
+}
+```
 
-### Stage 6: HM Interview Scheduling
-- Nova identifies top candidates (Pass+)
-- Schedules with HM via Zoom + Google Calendar
-- Sends prep materials to candidate
-- Human: HM conducts interview
+---
 
-### Stage 7: Offer Coordination (Future)
-- Nova sends offer letters
-- Tracks response, negotiation, acceptance
+## Phase 2: JD Generation & Distribution
+
+**Claude API generates:**
+- Full JD (compelling, scannable, SEO-optimized)
+- Multiple formats: HTML, PDF, plain text
+- Candidate-facing version + internal sourcing brief
+
+**Distribution channels:**
+- Company careers page (apply button → HAILO system)
+- LinkedIn job post (auto-post via API, bidirectional sync)
+- Email outreach (to HM's warm referrals)
+- Job boards: Indeed, Glassdoor, Wellfound (optional)
+- Internal Slack/email referral link
+
+---
+
+## Phase 3: Sourcing
+
+**Inbound:** Careers page + LinkedIn → resume parsed → profile created → scheduling link sent within 24h
+
+**Outbound:**
+1. Search LinkedIn Recruiter, GitHub, HAILO database, Apollo/Hunter
+2. Score by relevance (80+ = outreach)
+3. Generate personalized message (3 templates: skill-based, company background, network-based)
+4. Multi-channel: LinkedIn DM → email → optional Twitter
+5. Follow-up once at day 5, pause after 2 no-responses
+
+**Apply form:** Email, phone, name, resume, LinkedIn URL, start date, optional salary → thank you page with screening call ETA
+
+---
+
+## Phase 4: Screening Call (Nova Video, 20-25 min)
+
+**Nova's assessment structure:**
+- Section 1: Background & current role (5 min)
+- Section 2: Technical depth — system design, stack, approach (7 min)
+- Section 3: Role fit + motivation (4 min)
+- Closing: Next steps (2 min)
+
+**Scoring rubric (6 dimensions):**
+
+| Dimension | Weight | What Nova Listens For |
+|-----------|--------|----------------------|
+| Technical Depth | 25% | Ownership, complexity, depth |
+| Relevant Experience | 20% | Years + seniority alignment |
+| Cultural Fit | 15% | Values, team dynamics |
+| Leadership Readiness | 15% | Mentoring, decision making |
+| Communication | 15% | Clarity, listening |
+| Motivation | 10% | Genuine interest, research |
+
+**Decision logic:**
+- Score ≥ 7.5 + no critical red flags → `STRONG_PASS` → schedule HM immediately
+- Score ≥ 6.5 → `PASS` → schedule HM, note concerns
+- Score ≥ 5.5 → `HOLD`
+- Score < 5.5 → `PASS_FOR_NOW` → kind rejection email
+
+---
+
+## Phase 5: HM Handoff
+
+**Auto-actions when score ≥ 7.5:**
+1. Pull HM availability from Google Calendar
+2. Find 2-3 slots in next 3-5 days
+3. Create calendar invite with candidate + HM
+4. Send HM: full assessment report, highlighted transcript, suggested questions, compensation context, Nova notes
+
+**Calendar invite includes:** Candidate bio, score + recommendation, key strengths, discussion points, assessment report link, call recording link
+
+---
 
 ## Tech Stack
 
-- **Voice:** ElevenLabs (intake calls, screening interviews)
-- **Video:** Zoom API or WebRTC (screening sessions)
-- **AI:** Claude API (JD generation, scoring, summaries)
-- **Sourcing:** Clay API, LinkedIn API
-- **Calendar:** Google Calendar API, Zoom API
-- **Database:** Supabase
-- **Orchestration:** n8n
-- **Frontend:** React 18 + shadcn/ui (TA dashboard)
+| Component | Technology |
+|-----------|-----------|
+| Video calls | Zoom SDK or custom WebRTC |
+| Voice / transcription | ElevenLabs |
+| AI analysis + JD generation | Claude API (claude-sonnet-4-6) |
+| Scheduling | Google Calendar API |
+| Sourcing enrichment | Clay API, LinkedIn API, Apollo/Hunter |
+| Database | PostgreSQL (Supabase) |
+| Orchestration | n8n |
+| Frontend dashboard | React 18 + shadcn/ui |
 
-## Data Model
+---
 
-Tables: `candidates`, `assessments`, `interview_recordings`, `feedback`, `intake_sessions`, `job_descriptions`
+## Database Schema
 
-Full schema in FOUND-004.
+```sql
+CREATE TABLE intakes (id UUID PRIMARY KEY, hiring_manager_id UUID, role_title VARCHAR(255), jd_generated BOOLEAN, intake_transcript TEXT, intake_json JSONB, created_at TIMESTAMP);
+CREATE TABLE job_descriptions (id UUID PRIMARY KEY, intake_id UUID REFERENCES intakes(id), title VARCHAR(255), description_html TEXT, distribution_channels JSONB, created_at TIMESTAMP);
+CREATE TABLE candidates (id UUID PRIMARY KEY, email VARCHAR(255), name VARCHAR(255), source ENUM('inbound','outbound','referral'), linkedin_url TEXT, resume_url TEXT, resume_parsed JSONB, status ENUM('applied','screening_scheduled','screened','passed','rejected'), created_at TIMESTAMP);
+CREATE TABLE screenings (id UUID PRIMARY KEY, candidate_id UUID REFERENCES candidates(id), jd_id UUID REFERENCES job_descriptions(id), screening_date TIMESTAMP, overall_score DECIMAL(3,1), assessment_json JSONB, transcript TEXT, recording_url TEXT, recommendation ENUM('strong_pass','pass','hold','pass_for_now'), created_at TIMESTAMP);
+CREATE TABLE outreach (id UUID PRIMARY KEY, candidate_id UUID, jd_id UUID, channel ENUM('linkedin','email','twitter'), message_template VARCHAR(100), sent_at TIMESTAMP, status ENUM('sent','opened','clicked','responded','no_response'), created_at TIMESTAMP);
+```
 
-## Acceptance Criteria
+---
 
-- [ ] Intake call: Nova extracts all required fields, produces Intake Brief
-- [ ] JD: Claude generates publication-ready JD within 2 minutes of intake
-- [ ] Sourcing: 20+ qualified candidates within 24h of JD approval
-- [ ] Screening: Nova completes 20-min interview, produces scored assessment
-- [ ] HM only touches: intake call + final interview
-- [ ] Zero candidate data lost between stages
-- [ ] TA dashboard shows full pipeline status
+## KPIs
 
-## Out of Scope (Phase 1)
+| KPI | Target |
+|-----|--------|
+| Time-to-fill | < 20 days (intake → offer) |
+| Candidate quality | 70%+ offer acceptance |
+| Screening efficiency | 8 screenings/week/role |
+| HM satisfaction | 4.5/5.0 |
+| Cost-per-hire | < $500 |
 
-- Automated offer letters
-- LinkedIn direct messaging (API restrictions)
-- Background check integration
-- ATS integrations (Greenhouse, Lever)
+---
+
+## Implementation Roadmap
+
+**Sprint-002 (Phase 1):** Intake call infrastructure, JD generation, basic candidate profiles, inbound application handling, screening call scheduling  
+**Sprint-003 (Phase 2):** Outbound sourcing, multi-channel outreach, screening automation, HM calendar integration, basic dashboard  
+**Sprint-004 (Phase 3):** Advanced sourcing (GitHub, Apollo), A/B outreach testing, full analytics, automated follow-ups
